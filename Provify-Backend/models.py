@@ -28,7 +28,6 @@ class DeveloperBug(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     status: VerificationStatus = VerificationStatus.PENDING
     severity: Optional[int] = Field(default=None, ge=1, le=5)  # None until LLM analyzes
-    reproduction_steps: List[str] = Field(default_factory=list)
     last_verified: Optional[str] = None
     notes: str = ""
 

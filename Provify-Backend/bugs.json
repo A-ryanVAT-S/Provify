@@ -7,7 +7,7 @@
   {
     "app_name": "YouTube",
     "app_package": "com.google.android.youtube",
-    "bug": "Video quality settings menu closes immediately after opening."
+    "bug": "Shows No connection while opening the App"
   },
   {
     "app_name": "Google Maps",
@@ -27,6 +27,6 @@
   {
   "app_name": "Battlegrounds Mobile India",
   "app_package": "com.pubg.imobile",
-  "bug": "App asks for photos and videos permission every time it is opened."
+  "bug": "App asks for photos and videos permission every time it is opened"
 }
 ]
