@@ -52,27 +52,9 @@ Provify takes a bug description like *"app crashes when uploading photo"* and us
 |---------|-------------|
 | AI Bug Reproduction | Describe bugs in plain English, AI figures out the steps |
 | Auto Package Detection | Just type "Instagram", AI resolves to `com.instagram.android` |
-| Smart Deduplication | Similar bugs are merged automatically |
+| Duplicate Detection | Prevents duplicate bugs using similarity matching |
 | Real Device Testing | Works with emulators or USB-connected devices |
 | Verification Workflow | Pending → Verified → Fixed → Re-verified |
-
----
-
-## Project Structure
-
-```
-Provify/
-├── Provify-Backend/       # FastAPI + DroidRun
-│   ├── api.py            # REST endpoints
-│   ├── bug_verifier.py   # AI verification logic
-│   ├── issue_manager.py  # Bug storage & deduplication
-│   └── models.py         # Pydantic models
-│
-└── Provify-Frontend/      # React + Vite + shadcn/ui
-    └── src/
-        ├── pages/        # Dashboard, Bugs, Hero
-        └── components/   # UI components
-```
 
 ---
 
@@ -80,12 +62,19 @@ Provify/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/bugs` | List all bugs |
-| `POST` | `/bugs` | Create bug (app_package optional) |
-| `POST` | `/bugs/{id}/verify` | Trigger AI verification |
-| `POST` | `/bugs/{id}/fix` | Mark as fixed |
-| `GET` | `/stats` | Dashboard statistics |
-| `POST` | `/sync` | Sync bugs from file |
+| `GET` | `/stats` | Get bug statistics (total, pending, verified, fixed) |
+| `GET` | `/bugs` | List all bugs (optional filters: status, app_package) |
+| `GET` | `/bugs/{id}` | Get specific bug by ID |
+| `POST` | `/bugs` | Create single bug (app_package optional) |
+| `POST` | `/bugs/bulk` | Create multiple bugs |
+| `POST` | `/bugs/bulk-upload` | Bulk upload bugs from JSON array |
+| `POST` | `/bugs/{id}/verify` | Verify bug using DroidRun AI agent |
+| `POST` | `/bugs/verify-all` | Verify all pending bugs |
+| `POST` | `/bugs/{id}/fix` | Mark bug as fixed |
+| `POST` | `/bugs/reverify-fixed` | Re-verify all fixed bugs for regressions |
+| `PATCH` | `/bugs/{id}` | Update bug status/notes |
+| `DELETE` | `/bugs/{id}` | Delete bug |
+| `POST` | `/load-from-file` | Load bugs from bugs.json file |
 
 ---
 
