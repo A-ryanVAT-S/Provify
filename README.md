@@ -52,10 +52,8 @@ Provify takes a bug description like *"app crashes when uploading photo"* and us
 |---------|-------------|
 | AI Bug Reproduction | Describe bugs in plain English, AI figures out the steps |
 | Auto Package Detection | Just type "Instagram", AI resolves to `com.instagram.android` |
-| Duplicate Detection | Prevents duplicate bugs using similarity matching |
 | Real Device Testing | Works with emulators or USB-connected devices |
 | Verification Workflow | Pending → Verified → Fixed → Re-verified |
-
 ---
 
 ## API Endpoints
