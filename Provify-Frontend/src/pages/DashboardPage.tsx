@@ -208,6 +208,14 @@ export default function DashboardPage() {
                 </Button>
                 <Button
                   size="lg"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-semibold gap-3 text-base px-6 py-6"
+                  onClick={() => setBulkUploadDialogOpen(true)}
+                >
+                  <Upload className="h-5 w-5" />
+                  Bulk Upload
+                </Button>
+                <Button
+                  size="lg"
                   variant="outline"
                   className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 hover:text-white gap-3 text-base px-6 py-6"
                   onClick={() => navigate("/bugs")}

@@ -16,7 +16,7 @@ import {
 import { VerificationDialog } from "@/components/VerificationDialog";
 import { AddBugDialog } from "@/components/AddBugDialog";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
-import { fetchBugs, markBugFixed, type Bug, type BugStatus } from "@/lib/api";
+import { fetchBugs, markBugFixed, loadBugsFromFile, type Bug, type BugStatus } from "@/lib/api";
 import {
   Bug as BugIcon,
   CheckCircle,
@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   Filter,
   Upload,
+  RefreshCw,
 } from "lucide-react";
 
 const statusConfig = {
@@ -84,6 +85,9 @@ export default function BugsPage() {
   
   // Bulk upload dialog state
   const [bulkUploadDialogOpen, setBulkUploadDialogOpen] = useState(false);
+  
+  // Sync state
+  const [syncing, setSyncing] = useState(false);
 
   // Filter and sort bugs
   const filteredBugs = useMemo(() => {
@@ -120,6 +124,19 @@ export default function BugsPage() {
   }, [bugs, searchQuery, filterStatus, sortBy]);
 
   const pendingCount = bugs.filter((b) => b.status === "pending").length;
+
+  // Sync bugs from bugs.json file
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await loadBugsFromFile();
+      await loadBugs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sync bugs");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Load bugs from API
   const loadBugs = async () => {
@@ -274,6 +291,16 @@ export default function BugsPage() {
             </Badge>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-zinc-600 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 font-semibold gap-2"
+              onClick={handleSync}
+              disabled={syncing}
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing...' : 'Sync'}
+            </Button>
             <Button
               className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold gap-2"
               onClick={() => setAddDialogOpen(true)}
