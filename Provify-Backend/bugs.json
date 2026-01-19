@@ -1,0 +1,27 @@
+[
+  {
+    "app_name": "Haier Wash",
+    "app_package": "com.haier.globalwasher",
+    "bug": "App asks for permission from settings, but tapping on Settings does not open the system settings page."
+  },
+  {
+    "app_name": "YouTube",
+    "app_package": "com.google.android.youtube",
+    "bug": "Video quality settings menu closes immediately after opening."
+  },
+  {
+    "app_name": "Google Maps",
+    "app_package": "com.google.android.apps.maps",
+    "bug": "Share location button sometimes does not respond when tapped."
+  },
+  {
+    "app_name": "Google Chrome",
+    "app_package": "com.android.chrome",
+    "bug": "Tabs occasionally reload automatically after switching back to the app."
+  },
+  {
+    "app_name": "Camera",
+    "app_package": "com.android.camera",
+    "bug": "Camera app opens but briefly shows a black screen before preview appears."
+  }
+]

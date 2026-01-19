@@ -1,0 +1,118 @@
+# ===========================
+# Root .gitignore for Provify
+# ===========================
+
+# ============ Python Backend ============
+# Virtual environments
+Provify-Backend/.venv/
+Provify-Backend/venv/
+Provify-Backend/env/
+Provify-Backend/.env
+
+# Python cache
+Provify-Backend/__pycache__/
+Provify-Backend/**/__pycache__/
+Provify-Backend/*.py[cod]
+Provify-Backend/**/*.py[cod]
+Provify-Backend/*$py.class
+
+# Trajectories (DroidRun outputs)
+Provify-Backend/trajectories/
+
+# Data files (optional - uncomment if you want to exclude)
+# Provify-Backend/bugs.json
+# Provify-Backend/developer.json
+
+# Python testing
+Provify-Backend/.pytest_cache/
+Provify-Backend/.coverage
+Provify-Backend/htmlcov/
+Provify-Backend/.tox/
+
+# Distribution / packaging
+Provify-Backend/*.egg-info/
+Provify-Backend/dist/
+Provify-Backend/build/
+Provify-Backend/.eggs/
+
+# ============ React Frontend ============
+# Node modules
+Provify-Frontend/node_modules/
+
+# Build output
+Provify-Frontend/dist/
+Provify-Frontend/dist-ssr/
+Provify-Frontend/build/
+Provify-Frontend/.next/
+Provify-Frontend/out/
+
+# Logs
+Provify-Frontend/*.log
+Provify-Frontend/npm-debug.log*
+Provify-Frontend/yarn-debug.log*
+Provify-Frontend/yarn-error.log*
+Provify-Frontend/pnpm-debug.log*
+Provify-Frontend/lerna-debug.log*
+
+# Environment
+Provify-Frontend/.env
+Provify-Frontend/.env.local
+Provify-Frontend/.env.development.local
+Provify-Frontend/.env.test.local
+Provify-Frontend/.env.production.local
+
+# Testing
+Provify-Frontend/coverage/
+Provify-Frontend/.nyc_output/
+
+# TypeScript
+Provify-Frontend/*.tsbuildinfo
+Provify-Frontend/.eslintcache
+
+# ============ Editor & IDE ============
+# VSCode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# ============ OS Files ============
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ============ Misc ============
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.old
+
+# Sample data (uncomment if you want to include in repo)
+# sample-bugs.json
