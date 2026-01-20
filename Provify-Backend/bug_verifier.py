@@ -30,7 +30,7 @@ INSTRUCTIONS:
 4. Report whether you observed: crashes, freezes, UI glitches, or errors
 5. If the bug occurs, describe exactly what you saw
 6. If the app behaves normally, report that the bug was not reproduced
-
+7. Dont perform any actions unrelated to bug verification like file handling or social media interactions.
 Be thorough and report all observations."""
 
         agent = DroidAgent(

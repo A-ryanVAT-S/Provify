@@ -22,7 +22,7 @@
   {
     "app_name": "Camera",
     "app_package": "com.android.camera",
-    "bug": "Camera app opens but briefly shows a black screen before preview appears."
+    "bug": "Camera app shows only black screen"
   },
   {
   "app_name": "Battlegrounds Mobile India",

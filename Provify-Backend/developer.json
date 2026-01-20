@@ -1,1 +1,68 @@
-[]
+[
+  {
+    "id": "ee347017",
+    "app_name": "Battlegrounds Mobile India",
+    "app_package": "com.pubg.imobile",
+    "bug": "App asks for photos and videos permission every time it is opened",
+    "created_at": "2026-01-20T01:51:36.501485",
+    "status": "pending",
+    "severity": 4,
+    "last_verified": null,
+    "notes": ""
+  },
+  {
+    "id": "f78df8ee",
+    "app_name": "Camera",
+    "app_package": "com.android.camera",
+    "bug": "Camera app shows only black screen",
+    "created_at": "2026-01-20T01:51:34.677199",
+    "status": "not_reproducible",
+    "severity": 5,
+    "last_verified": "2026-01-20T01:52:29.060458",
+    "notes": "The camera app opened successfully and displayed a live camera preview. All UI elements, including the shutter button, flash controls, and camera switch, were visible and appeared to be functional. There were no crashes, freezes, UI glitches, or errors observed. The app behaved as expected, and the reported black screen bug was not reproduced."
+  },
+  {
+    "id": "bbb1a23e",
+    "app_name": "Google Chrome",
+    "app_package": "com.android.chrome",
+    "bug": "Tabs occasionally reload automatically after switching back to the app.",
+    "created_at": "2026-01-20T01:51:31.619461",
+    "status": "pending",
+    "severity": 3,
+    "last_verified": null,
+    "notes": ""
+  },
+  {
+    "id": "e3842a76",
+    "app_name": "Google Maps",
+    "app_package": "com.google.android.apps.maps",
+    "bug": "Share location button sometimes does not respond when tapped.",
+    "created_at": "2026-01-20T01:51:28.378805",
+    "status": "pending",
+    "severity": 3,
+    "last_verified": null,
+    "notes": ""
+  },
+  {
+    "id": "7cba8a7f",
+    "app_name": "Youtube",
+    "app_package": "com.google.android.youtube",
+    "bug": "Shows No connection while opening the App",
+    "created_at": "2026-01-20T01:51:24.859464",
+    "status": "pending",
+    "severity": 4,
+    "last_verified": null,
+    "notes": ""
+  },
+  {
+    "id": "781a5c2d",
+    "app_name": "Haier Wash",
+    "app_package": "com.haier.globalwasher",
+    "bug": "App asks for permission from settings, but tapping on Settings does not open the system settings page.",
+    "created_at": "2026-01-20T01:51:22.820190",
+    "status": "pending",
+    "severity": 4,
+    "last_verified": null,
+    "notes": ""
+  }
+]
