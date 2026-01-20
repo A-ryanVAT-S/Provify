@@ -7,7 +7,7 @@ import os
 from google import genai
 from dotenv import load_dotenv
 
-# Load .env file
+# env load
 load_dotenv()
 
 from models import BugInput, DeveloperBug, VerificationStatus
@@ -16,8 +16,7 @@ from models import BugInput, DeveloperBug, VerificationStatus
 BUGS_INPUT_FILE = "bugs.json"
 DEVELOPER_FILE = "developer.json"
 
-
-# Normalize app name to Title Case
+#app casing
 def normalize_app_name(app_name: str) -> str:
     return app_name.strip().title()
 

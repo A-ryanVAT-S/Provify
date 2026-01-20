@@ -482,20 +482,20 @@ function BugCard({
   const config = statusConfig[bug.status];
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 flex flex-col">
+    <Card className="bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
       <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-xl text-zinc-100 mb-2 truncate">
+            <CardTitle className="text-lg sm:text-xl text-zinc-100 mb-2 truncate">
               {bug.app_name}
             </CardTitle>
-            <div className="text-sm text-zinc-500 font-mono truncate">
+            <div className="text-xs sm:text-sm text-zinc-500 font-mono truncate">
               {bug.app_package}
             </div>
           </div>
-          <Badge className={`${config.color} border shrink-0 text-sm px-3 py-1`}>
-            {config.icon}
-            <span className="ml-1">{config.label}</span>
+          <Badge className={`${config.color} border shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 py-1 sm:px-3 flex items-center gap-1`}>
+            <span className="hidden sm:inline">{config.icon}</span>
+            <span>{config.label}</span>
           </Badge>
         </div>
       </CardHeader>
