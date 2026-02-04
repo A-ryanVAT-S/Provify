@@ -36,6 +36,39 @@ export interface VerifyResult {
   success: boolean;
   status: string;
   message: string;
+  verification_summary?: VerificationSummary;
+}
+
+// Structured verification summary
+export interface VerificationSummary {
+  timestamp: string;
+  status: string;
+  steps: string[];
+  result: string;
+  devices_tested: number;
+  reproduced: number;
+  not_reproduced: number;
+  confidence: string;
+  summary: string;
+  device_name?: string;
+}
+
+// Device info from backend
+export interface DeviceInfo {
+  serial: string;
+  name: string;
+}
+
+export interface DevicesResponse {
+  count: number;
+  devices: DeviceInfo[];
+}
+
+// Fetch connected devices
+export async function fetchDevices(): Promise<DevicesResponse> {
+  const res = await fetch(`${API_BASE}/devices`);
+  if (!res.ok) throw new Error("Failed to fetch devices");
+  return res.json();
 }
 
 // Fetch all bugs with optional filters
@@ -97,6 +130,13 @@ export async function deleteBug(bugId: string): Promise<void> {
 export async function loadBugsFromFile(): Promise<{ loaded: number }> {
   const res = await fetch(`${API_BASE}/load-from-file`, { method: "POST" });
   if (!res.ok) throw new Error("Failed to load from file");
+  return res.json();
+}
+
+// Get verification summary for a bug
+export async function fetchBugSummary(bugId: string): Promise<VerificationSummary> {
+  const res = await fetch(`${API_BASE}/bugs/${bugId}/summary`);
+  if (!res.ok) throw new Error("No verification summary found");
   return res.json();
 }
 

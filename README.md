@@ -11,9 +11,12 @@ Provify uses [DroidRun](https://github.com/droidrun/droidrun) to automatically r
 ### 1. Backend (FastAPI)
 
 ```bash
+
 cd Provify-Backend
+python -m venv .venv
+.venv\Scripts\Activate
 pip install -r requirements.txt
-set GEMINI_API_KEY=your_key_here
+set GOOGLE_API_KEY=your_key_here  #add this in .env also
 python -m uvicorn api:app --reload --port 8000
 ```
 
@@ -54,6 +57,21 @@ Provify takes a bug description like *"app crashes when uploading photo"* and us
 | Auto Package Detection | Just type "Instagram", AI resolves to `com.instagram.android` |
 | Real Device Testing | Works with emulators or USB-connected devices |
 | Verification Workflow | Pending → Verified → Fixed → Re-verified |
+| Detailed Execution Reports | View actual steps executed by AI agent during verification |
+
+---
+
+## Verification Reports
+
+Each bug verification generates a detailed report with:
+
+- **Summary**: Overall result with confidence level (HIGH/MEDIUM/LOW)
+- **Device Info**: Which device was used (auto-detected from connected USB devices)
+- **Steps Executed**: Actual actions performed by the AI agent
+  - App launches, taps, swipes, text input
+  - Agent reasoning at each step
+  - Execution results and observations
+- **Observations**: What the agent saw during testing
 ---
 
 ## API Endpoints
@@ -61,18 +79,57 @@ Provify takes a bug description like *"app crashes when uploading photo"* and us
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/stats` | Get bug statistics (total, pending, verified, fixed) |
+| `GET` | `/devices` | Get connected devices info (count, status) |
 | `GET` | `/bugs` | List all bugs (optional filters: status, app_package) |
 | `GET` | `/bugs/{id}` | Get specific bug by ID |
 | `POST` | `/bugs` | Create single bug (app_package optional) |
 | `POST` | `/bugs/bulk` | Create multiple bugs |
 | `POST` | `/bugs/bulk-upload` | Bulk upload bugs from JSON array |
 | `POST` | `/bugs/{id}/verify` | Verify bug using DroidRun AI agent |
-| `POST` | `/bugs/verify-all` | Verify all pending bugs |
+| `POST` | `/bugs/verify-all` | Verify all pending bugs in parallel |
 | `POST` | `/bugs/{id}/fix` | Mark bug as fixed |
 | `POST` | `/bugs/reverify-fixed` | Re-verify all fixed bugs for regressions |
 | `PATCH` | `/bugs/{id}` | Update bug status/notes |
 | `DELETE` | `/bugs/{id}` | Delete bug |
 | `POST` | `/load-from-file` | Load bugs from bugs.json file |
+
+---
+
+## Multi-Device Parallel Testing
+
+Connect multiple Android devices via USB and Provify will test each bug on ALL devices simultaneously:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Single Bug                              │
+│                    "App crashes on upload"                      │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Device Pool Manager                          │
+│         Auto-detects all USB devices • Tests in parallel        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+           ┌──────────────────┼──────────────────┐
+           ▼                  ▼                  ▼
+      ┌─────────┐        ┌─────────┐        ┌─────────┐
+      │ Pixel 7 │        │ Samsung │        │ OnePlus │
+      │   ✓     │        │   ✓     │        │   ✗     │
+      └─────────┘        └─────────┘        └─────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Aggregated Results                          │
+│  Devices Tested: 3  |  Reproduced: 2/3  |  Confidence: HIGH     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Single or multiple devices** - works with 1 to N devices
+- **Parallel execution** - all devices test simultaneously
+- **Aggregated results** - see reproduction rate across devices
+- **Majority voting** - bug status based on device consensus
+- **Higher confidence** - more devices = more reliable results
 
 ---
 
@@ -87,11 +144,9 @@ Provify takes a bug description like *"app crashes when uploading photo"* and us
 
 ## Limitations
 
-- One device at a time
 - App must be pre-installed
 - Can't simulate network conditions
 - Can't access account-gated features
 - Limitations with messaging and file handling
 
 ---
-

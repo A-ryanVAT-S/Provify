@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
 import asyncio
+from datetime import datetime
 
-from models import BugInput, DeveloperBug, VerificationStatus
+from models import BugInput, DeveloperBug, VerificationStatus, VerificationSummary
 from issue_manager import IssueManager
 from bug_verifier import BugVerifier
+from device_pool import device_pool
 
 
 app = FastAPI(title="Provify API", version="1.0.0")
@@ -21,6 +23,12 @@ app.add_middleware(
 
 manager = IssueManager()
 verifier = BugVerifier()
+
+# Refresh device pool on startup
+@app.on_event("startup")
+async def startup_event():
+    device_pool.refresh()
+    print(f"[Provify] Found {device_pool.device_count()} connected devices")
 
 
 # Request model for creating a new bug
@@ -49,6 +57,16 @@ class StatsResponse(BaseModel):
 @app.get("/")
 async def root():
     return {"message": "Provify API", "version": "1.0.0"}
+
+
+# Get connected devices info
+@app.get("/devices")
+async def get_devices():
+    device_pool.refresh()
+    return {
+        "count": device_pool.device_count(),
+        "devices": device_pool.get_all()
+    }
 
 
 # Get overall bug statistics
@@ -139,56 +157,203 @@ async def bulk_upload_bugs(bugs_data: List[BugCreateRequest]):
     }
 
 
-# Verify a single bug using DroidRun
+# Helper function to determine confidence score based on verification result
+def calculate_confidence(success: bool, steps_count: int) -> str:
+    if success:
+        if steps_count >= 3:
+            return "HIGH"
+        elif steps_count >= 1:
+            return "MEDIUM"
+        else:
+            return "LOW"
+    else:
+        if steps_count >= 5:
+            return "HIGH"
+        elif steps_count >= 2:
+            return "MEDIUM"
+        else:
+            return "LOW"
+
+
+# Verify a single bug on ALL connected devices in parallel
 @app.post("/bugs/{bug_id}/verify")
 async def verify_bug(bug_id: str):
     if bug_id not in manager.bugs:
         raise HTTPException(status_code=404, detail="Bug not found")
     
     bug = manager.bugs[bug_id]
-    result = await verifier.verify_bug(bug)
+    device_pool.refresh()
     
-    if result.success:
-        manager.update_status(bug_id, VerificationStatus.VERIFIED, result.observations)
-        return {
-            "success": True,
-            "status": "verified",
-            "message": result.observations
-        }
-    else:
-        manager.update_status(bug_id, VerificationStatus.NOT_REPRODUCIBLE, result.observations)
-        return {
-            "success": False,
-            "status": "not_reproducible",
-            "message": result.observations
-        }
+    if device_pool.device_count() == 0:
+        raise HTTPException(status_code=503, detail="No devices connected")
+    
+    result = await verify_bug_on_all_devices(bug)
+    
+    return {
+        "success": result["status"] == "verified",
+        "status": result["status"],
+        "message": result["message"],
+        "devices_tested": result["devices_tested"],
+        "reproduced": result["reproduced"],
+        "not_reproduced": result["not_reproduced"],
+        "verification_summary": result["verification_summary"]
+    }
 
 
-# Verify all pending bugs in batch
+# Get verification summary for a bug
+@app.get("/bugs/{bug_id}/summary")
+async def get_bug_summary(bug_id: str):
+    if bug_id not in manager.bugs:
+        raise HTTPException(status_code=404, detail="Bug not found")
+    
+    summary = manager.get_verification_summary(bug_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="No verification summary found for this bug")
+    
+    return summary.model_dump()
+
+
+# Verify all pending bugs (each bug tested on all devices)
 @app.post("/bugs/verify-all")
 async def verify_all_pending():
+    device_pool.refresh()
     pending = manager.get_pending()
+    
+    if not pending:
+        return {"verified": 0, "total": 0, "devices_used": 0, "results": []}
+    
+    if device_pool.device_count() == 0:
+        raise HTTPException(status_code=503, detail="No devices connected")
+    
     results = []
     
+    # Verify each bug sequentially (each bug runs on all devices in parallel)
     for bug in pending:
-        result = await verifier.verify_bug(bug)
-        
-        if result.success:
-            manager.update_status(bug.id, VerificationStatus.VERIFIED, result.observations)
+        try:
+            # Call the verify endpoint logic for each bug
+            result = await verify_bug_on_all_devices(bug)
             results.append({
                 "bug_id": bug.id,
-                "status": "verified",
-                "message": result.observations
+                "status": result["status"],
+                "devices_tested": result["devices_tested"],
+                "reproduced": result["reproduced"],
+                "message": result["message"]
             })
-        else:
-            manager.update_status(bug.id, VerificationStatus.NOT_REPRODUCIBLE, result.observations)
+        except Exception as e:
             results.append({
                 "bug_id": bug.id,
-                "status": "not_reproducible",
-                "message": result.observations
+                "status": "error",
+                "devices_tested": 0,
+                "reproduced": 0,
+                "message": str(e)
             })
     
-    return {"verified": len([r for r in results if r["status"] == "verified"]), "results": results}
+    verified_count = len([r for r in results if r["status"] == "verified"])
+    return {
+        "verified": verified_count,
+        "total": len(results),
+        "devices_used": device_pool.device_count(),
+        "results": results
+    }
+
+
+# Helper to verify a bug on all devices (used by verify-all)
+async def verify_bug_on_all_devices(bug: DeveloperBug):
+    devices = device_pool.get_all()
+    
+    # Test bug on a single device
+    async def test_on_device(device_info: dict):
+        serial = device_info["serial"]
+        name = device_info["name"]
+        try:
+            result = await verifier.verify_bug(bug, serial)
+            return {
+                "device": name,
+                "serial": serial,
+                "reproduced": result.success,
+                "steps": result.steps_executed,
+                "observations": result.observations
+            }
+        except Exception as e:
+            return {
+                "device": name,
+                "serial": serial,
+                "reproduced": False,
+                "steps": [],
+                "observations": f"Error: {str(e)}"
+            }
+    
+    # Run on ALL devices in parallel
+    device_results = await asyncio.gather(*[test_on_device(d) for d in devices])
+    
+    # Aggregate results
+    devices_tested = len(device_results)
+    reproduced = sum(1 for r in device_results if r["reproduced"])
+    not_reproduced = devices_tested - reproduced
+    
+    # Collect all steps and observations
+    all_steps = []
+    all_observations = []
+    device_names = []
+    for r in device_results:
+        device_names.append(r["device"])
+        if r["steps"]:
+            all_steps.extend(r["steps"])
+        all_observations.append(f"[{r['device']}] {r['observations']}")
+    
+    steps = all_steps if all_steps else ["Launch app", "Execute test scenario", "Observe behavior"]
+    
+    # Calculate confidence
+    if devices_tested == 1:
+        confidence = calculate_confidence(reproduced > 0, len(steps))
+    else:
+        agreement_rate = max(reproduced, not_reproduced) / devices_tested
+        if agreement_rate >= 0.8:
+            confidence = "HIGH"
+        elif agreement_rate >= 0.5:
+            confidence = "MEDIUM"
+        else:
+            confidence = "LOW"
+    
+    # Majority vote
+    bug_verified = reproduced > not_reproduced
+    status_str = "verified" if bug_verified else "not_reproducible"
+    
+    timestamp = datetime.now().isoformat()
+    device_list = ", ".join(device_names)
+    summary_text = (
+        f"Bug {'reproduced' if bug_verified else 'not reproduced'} on {reproduced}/{devices_tested} devices ({device_list}). "
+        f"Executed {len(steps)} verification steps. Confidence: {confidence}."
+    )
+    
+    verification_summary = VerificationSummary(
+        timestamp=timestamp,
+        status=status_str,
+        steps=steps,
+        result="\n\n".join(all_observations),
+        devices_tested=devices_tested,
+        reproduced=reproduced,
+        not_reproduced=not_reproduced,
+        confidence=confidence,
+        summary=summary_text,
+        device_name=device_list
+    )
+    
+    if bug_verified:
+        manager.update_status(bug.id, VerificationStatus.VERIFIED, verification_summary.result)
+    else:
+        manager.update_status(bug.id, VerificationStatus.NOT_REPRODUCIBLE, verification_summary.result)
+    
+    manager.update_verification_summary(bug.id, verification_summary)
+    
+    return {
+        "status": status_str,
+        "message": summary_text,
+        "devices_tested": devices_tested,
+        "reproduced": reproduced,
+        "not_reproduced": not_reproduced,
+        "verification_summary": verification_summary.model_dump()
+    }
 
 
 # Update bug status and notes

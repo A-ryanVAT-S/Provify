@@ -19,6 +19,20 @@ class BugInput(BaseModel):
     bug: str
 
 
+# Structured verification summary stored with each bug
+class VerificationSummary(BaseModel):
+    timestamp: str = Field(description="When the verification was performed")
+    status: str = Field(description="verified or not_reproducible")
+    steps: List[str] = Field(description="Steps that were executed during verification")
+    result: str = Field(description="Result observation text")
+    devices_tested: int = Field(default=1, description="Number of devices tested")
+    reproduced: int = Field(description="Number of times bug was reproduced")
+    not_reproduced: int = Field(description="Number of times bug was not reproduced")
+    confidence: str = Field(description="HIGH, MEDIUM, or LOW confidence score")
+    summary: str = Field(description="Short summary explanation of the verification")
+    device_name: str = Field(default="Unknown", description="Device used for testing")
+
+
 # Full bug model stored in developer.json
 class DeveloperBug(BaseModel):
     id: str
@@ -30,6 +44,7 @@ class DeveloperBug(BaseModel):
     severity: Optional[int] = Field(default=None, ge=1, le=5)  # None until LLM analyzes
     last_verified: Optional[str] = None
     notes: str = ""
+    verification_summary: Optional[VerificationSummary] = None
 
 
 # Result model from DroidRun verification

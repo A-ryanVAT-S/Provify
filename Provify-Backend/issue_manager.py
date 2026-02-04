@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # env load
 load_dotenv()
 
-from models import BugInput, DeveloperBug, VerificationStatus
+from models import BugInput, DeveloperBug, VerificationStatus, VerificationSummary
 
 
 BUGS_INPUT_FILE = "bugs.json"
@@ -179,6 +179,23 @@ class IssueManager:
         if notes:
             bug.notes = notes
         self._save_developer_bugs()
+
+    # Update bug verification summary (structured report)
+    def update_verification_summary(self, bug_id: str, summary: VerificationSummary):
+        if bug_id not in self.bugs:
+            raise ValueError(f"Bug {bug_id} not found")
+        
+        bug = self.bugs[bug_id]
+        bug.verification_summary = summary
+        self._save_developer_bugs()
+
+    # Get verification summary for a bug
+    def get_verification_summary(self, bug_id: str) -> VerificationSummary:
+        if bug_id not in self.bugs:
+            raise ValueError(f"Bug {bug_id} not found")
+        
+        bug = self.bugs[bug_id]
+        return bug.verification_summary
 
     # Mark bug as verified
     def mark_verified(self, bug_id: str):

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VerificationDialog } from "@/components/VerificationDialog";
+import { ReportViewDialog } from "@/components/ReportViewDialog";
 import { AddBugDialog } from "@/components/AddBugDialog";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { fetchBugs, markBugFixed, loadBugsFromFile, type Bug, type BugStatus } from "@/lib/api";
@@ -35,6 +36,7 @@ import {
   Filter,
   Upload,
   RefreshCw,
+  FileText,
 } from "lucide-react";
 
 const statusConfig = {
@@ -69,7 +71,7 @@ export default function BugsPage() {
   // Search, filter and sort state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "verified" | "not_reproducible" | "fixed">("all");
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "severity">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "severity" | "status">("status");
 
   // Verification dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -85,6 +87,10 @@ export default function BugsPage() {
   
   // Bulk upload dialog state
   const [bulkUploadDialogOpen, setBulkUploadDialogOpen] = useState(false);
+  
+  // Report view dialog state
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportBug, setReportBug] = useState<Bug | null>(null);
   
   // Sync state
   const [syncing, setSyncing] = useState(false);
@@ -115,8 +121,12 @@ export default function BugsPage() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       } else if (sortBy === "oldest") {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      } else {
+      } else if (sortBy === "severity") {
         return (b.severity ?? 0) - (a.severity ?? 0);
+      } else {
+        // Default status sort: pending -> fixed -> verified -> not_reproducible
+        const statusOrder = { pending: 0, fixed: 1, verified: 2, not_reproducible: 3 };
+        return statusOrder[a.status] - statusOrder[b.status];
       }
     });
 
@@ -235,6 +245,15 @@ export default function BugsPage() {
     if (bug) openVerificationDialog(bug, "reverify");
   };
 
+  // Handle view report button
+  const handleViewReport = (bugId: string) => {
+    const bug = bugs.find((b) => b.id === bugId);
+    if (bug) {
+      setReportBug(bug);
+      setReportDialogOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 overflow-hidden">
       {/* Verification Dialog */}
@@ -264,6 +283,19 @@ export default function BugsPage() {
         onClose={() => setBulkUploadDialogOpen(false)}
         onBugsUploaded={loadBugs}
       />
+
+      {/* Report View Dialog */}
+      {reportBug && (
+        <ReportViewDialog
+          isOpen={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          bugId={reportBug.id}
+          bugDescription={reportBug.bug}
+          appName={reportBug.app_name}
+          appPackage={reportBug.app_package}
+          bugStatus={reportBug.status}
+        />
+      )}
 
       {/* Animated Grid Background */}
       <div className="fixed inset-0 z-0">
@@ -386,6 +418,11 @@ export default function BugsPage() {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-zinc-800">
+                <SelectItem value="status" className="text-zinc-100">
+                  <span className="flex items-center gap-2">
+                    <ArrowUpDown className="h-4 w-4" /> Status
+                  </span>
+                </SelectItem>
                 <SelectItem value="newest" className="text-zinc-100">
                   <span className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" /> Newest First
@@ -456,6 +493,7 @@ export default function BugsPage() {
                     onVerify={() => handleVerify(bug.id)}
                     onMarkFixed={() => handleMarkFixed(bug.id)}
                     onReverify={() => handleReverify(bug.id)}
+                    onViewReport={() => handleViewReport(bug.id)}
                   />
                 ))}
               </div>
@@ -473,11 +511,13 @@ function BugCard({
   onVerify,
   onMarkFixed,
   onReverify,
+  onViewReport,
 }: {
   bug: Bug;
   onVerify: () => void;
   onMarkFixed: () => void;
   onReverify: () => void;
+  onViewReport: () => void;
 }) {
   const config = statusConfig[bug.status];
 
@@ -534,24 +574,55 @@ function BugCard({
           )}
 
           {bug.status === "verified" && (
+            <>
+              <Button
+                className="bg-blue-600 hover:bg-blue-500 text-white gap-2 text-base px-5 py-5"
+                onClick={onMarkFixed}
+              >
+                <Wrench className="h-5 w-5" />
+                Mark Fixed
+              </Button>
+              <Button
+                variant="outline"
+                className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 gap-2 text-base px-5 py-5"
+                onClick={onViewReport}
+              >
+                <FileText className="h-5 w-5" />
+                View Report
+              </Button>
+            </>
+          )}
+
+          {bug.status === "not_reproducible" && (
             <Button
-              className="bg-blue-600 hover:bg-blue-500 text-white gap-2 text-base px-5 py-5"
-              onClick={onMarkFixed}
+              variant="outline"
+              className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 gap-2 text-base px-5 py-5"
+              onClick={onViewReport}
             >
-              <Wrench className="h-5 w-5" />
-              Mark Fixed
+              <FileText className="h-5 w-5" />
+              View Report
             </Button>
           )}
 
           {bug.status === "fixed" && (
-            <Button
-              variant="outline"
-              className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 gap-2 text-base px-5 py-5"
-              onClick={onReverify}
-            >
-              <RotateCcw className="h-5 w-5" />
-              Re-verify
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 gap-2 text-base px-5 py-5"
+                onClick={onReverify}
+              >
+                <RotateCcw className="h-5 w-5" />
+                Re-verify
+              </Button>
+              <Button
+                variant="outline"
+                className="border-zinc-600 bg-zinc-800 text-white hover:bg-zinc-700 gap-2 text-base px-5 py-5"
+                onClick={onViewReport}
+              >
+                <FileText className="h-5 w-5" />
+                View Report
+              </Button>
+            </>
           )}
         </div>
       </CardContent>
